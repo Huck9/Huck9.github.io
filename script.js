@@ -110,38 +110,84 @@ document.getElementById('addRoutePointBtn').addEventListener('click', () => {
 });
 
 // Optymalizuj trasę
-document.getElementById('optimizeRouteBtn').addEventListener('click', () => {
-    const vehicleId = parseInt(document.getElementById('vehicleSelect').value);
-    
-    if (!vehicleId) {
-        alert('Proszę wybrać pojazd!');
-        return;
-    }
+const optimizeBtn = document.getElementById('optimizeRouteBtn');
+if (optimizeBtn) {
+    optimizeBtn.addEventListener('click', () => {
+        const vehicleId = parseInt(document.getElementById('vehicleSelect').value);
+        
+        if (!vehicleId) {
+            alert('Proszę wybrać pojazd!');
+            return;
+        }
 
-    const vehicle = fleetManager.getVehicle(vehicleId);
-    if (!vehicle || vehicle.route.length < 2) {
-        alert('Pojazd musi mieć co najmniej 2 punkty trasy do optymalizacji!');
-        return;
-    }
+        const vehicle = fleetManager.getVehicle(vehicleId);
+        if (!vehicle) {
+            alert('Pojazd nie został znaleziony!');
+            return;
+        }
 
-    const originalRoute = [...vehicle.route];
-    const optimizedRoute = routeOptimizer.optimizeRoute(vehicleId);
-    
-    vehicle.route = optimizedRoute;
-    fleetManager.calculateRouteDistance(vehicleId);
-    
-    const comparison = routeOptimizer.compareRoutes(originalRoute, optimizedRoute, vehicle.currentPosition);
-    
-    mapManager.drawRoute(vehicle);
-    updateVehiclesList();
-    updateStats();
-    updateCharts();
-    
-    alert(`Trasa zoptymalizowana!\n` +
-          `Oryginalna długość: ${comparison.originalLength} km\n` +
-          `Zoptymalizowana: ${comparison.optimizedLength} km\n` +
-          `Oszczędność: ${comparison.savedDistance} km (${comparison.improvement}%)`);
-});
+        if (!vehicle.route || vehicle.route.length < 2) {
+            alert('Pojazd musi mieć co najmniej 2 punkty trasy do optymalizacji!');
+            return;
+        }
+
+        console.log('Optymalizuję trasę dla pojazdu:', vehicle.name);
+        console.log('Oryginalna trasa:', vehicle.route);
+
+        // Zapisz oryginalną trasę
+        const originalRoute = JSON.parse(JSON.stringify(vehicle.route)); // Głęboka kopia
+        const originalLength = routeOptimizer.calculateRouteLength(originalRoute, vehicle.currentPosition);
+        
+        // Optymalizuj trasę
+        const optimizedRoute = routeOptimizer.optimizeRoute(vehicleId);
+        
+        if (!optimizedRoute || optimizedRoute.length === 0) {
+            alert('Błąd podczas optymalizacji trasy!');
+            console.error('Optymalizacja zwróciła pustą trasę');
+            return;
+        }
+
+        console.log('Zoptymalizowana trasa:', optimizedRoute);
+        
+        // Zaktualizuj trasę pojazdu
+        vehicle.route = optimizedRoute;
+        
+        // Oblicz nową odległość
+        fleetManager.calculateRouteDistance(vehicleId);
+        
+        // Zapisz zmiany
+        fleetManager.saveToStorage();
+        
+        // Oblicz porównanie
+        const optimizedLength = routeOptimizer.calculateRouteLength(optimizedRoute, vehicle.currentPosition);
+        const savedDistance = originalLength - optimizedLength;
+        const improvement = originalLength > 0 ? ((savedDistance / originalLength) * 100) : 0;
+        
+        // Usuń starą trasę z mapy i narysuj nową
+        if (mapManager && mapManager.initialized) {
+            mapManager.removeRoute(vehicleId);
+            setTimeout(() => {
+                mapManager.drawRoute(vehicle);
+            }, 50);
+        }
+        
+        // Odśwież interfejs
+        updateVehiclesList();
+        updateStats();
+        updateCharts();
+        
+        // Pokaż wyniki
+        const message = `Trasa zoptymalizowana!\n\n` +
+              `Oryginalna długość: ${originalLength.toFixed(2)} km\n` +
+              `Zoptymalizowana: ${optimizedLength.toFixed(2)} km\n` +
+              `Oszczędność: ${savedDistance.toFixed(2)} km (${improvement.toFixed(2)}%)`;
+        
+        alert(message);
+        console.log('Optymalizacja zakończona:', message);
+    });
+} else {
+    console.error('Przycisk optimizeRouteBtn nie został znaleziony!');
+}
 
 // Wyczyść trasę
 document.getElementById('clearRouteBtn').addEventListener('click', () => {

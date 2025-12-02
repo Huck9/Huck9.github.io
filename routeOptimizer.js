@@ -8,18 +8,31 @@ class RouteOptimizer {
 
     // Algorytm najkrótszej ścieżki (Nearest Neighbor - prosty algorytm TSP)
     optimizeRoute(vehicleId) {
-        const vehicle = fleetManager.getVehicle(vehicleId);
-        if (!vehicle || vehicle.route.length < 2) {
-            return vehicle ? vehicle.route : [];
+        if (!fleetManager) {
+            console.error('FleetManager nie jest dostępny!');
+            return [];
         }
 
-        // Punkt startowy
-        const start = vehicle.currentPosition;
-        const unvisited = [...vehicle.route];
-        const optimizedRoute = [];
-        let currentPoint = start;
+        const vehicle = fleetManager.getVehicle(vehicleId);
+        if (!vehicle) {
+            console.error(`Pojazd o ID ${vehicleId} nie został znaleziony!`);
+            return [];
+        }
 
-        // Algorytm Nearest Neighbor
+        if (!vehicle.route || vehicle.route.length < 2) {
+            console.warn('Pojazd musi mieć co najmniej 2 punkty trasy!');
+            return vehicle.route ? [...vehicle.route] : [];
+        }
+
+        console.log(`Optymalizuję trasę dla pojazdu ${vehicle.name} z ${vehicle.route.length} punktami`);
+
+        // Punkt startowy
+        const start = { ...vehicle.currentPosition }; // Kopia obiektu
+        const unvisited = vehicle.route.map(p => ({ ...p })); // Głęboka kopia wszystkich punktów
+        const optimizedRoute = [];
+        let currentPoint = { ...start };
+
+        // Algorytm Nearest Neighbor (najbliższy sąsiad)
         while (unvisited.length > 0) {
             let nearestIndex = 0;
             let nearestDistance = this.calculateDistanceWithTraffic(
@@ -41,11 +54,13 @@ class RouteOptimizer {
             }
 
             // Dodaj najbliższy punkt do optymalnej trasy
-            optimizedRoute.push(unvisited[nearestIndex]);
-            currentPoint = unvisited[nearestIndex];
+            const nearestPoint = unvisited[nearestIndex];
+            optimizedRoute.push({ ...nearestPoint }); // Kopia punktu
+            currentPoint = { ...nearestPoint };
             unvisited.splice(nearestIndex, 1);
         }
 
+        console.log(`Optymalizacja zakończona. Nowa trasa ma ${optimizedRoute.length} punktów`);
         return optimizedRoute;
     }
 
@@ -97,16 +112,26 @@ class RouteOptimizer {
 
     // Porównaj długość trasy przed i po optymalizacji
     compareRoutes(originalRoute, optimizedRoute, startPoint) {
+        if (!originalRoute || !optimizedRoute) {
+            return {
+                originalLength: '0.00',
+                optimizedLength: '0.00',
+                improvement: '0.00',
+                savedDistance: '0.00'
+            };
+        }
+
         const originalLength = this.calculateRouteLength(originalRoute, startPoint);
         const optimizedLength = this.calculateRouteLength(optimizedRoute, startPoint);
         
-        const improvement = ((originalLength - optimizedLength) / originalLength) * 100;
+        const savedDistance = originalLength - optimizedLength;
+        const improvement = originalLength > 0 ? ((savedDistance / originalLength) * 100) : 0;
         
         return {
             originalLength: originalLength.toFixed(2),
             optimizedLength: optimizedLength.toFixed(2),
             improvement: improvement.toFixed(2),
-            savedDistance: (originalLength - optimizedLength).toFixed(2)
+            savedDistance: savedDistance.toFixed(2)
         };
     }
 
