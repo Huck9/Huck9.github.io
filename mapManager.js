@@ -115,6 +115,9 @@ class MapManager {
                 }
             });
 
+            // Dodaj obsługę kliknięć na mapę
+            this.setupMapClickHandler();
+
             this.initialized = true;
             console.log('Mapa została zainicjalizowana pomyślnie');
             return true;
@@ -122,6 +125,95 @@ class MapManager {
             console.error('Błąd inicjalizacji mapy:', error);
             console.error('Stack trace:', error.stack);
             return false;
+        }
+    }
+
+    // Obsługa kliknięć na mapę - wyświetlanie współrzędnych
+    setupMapClickHandler() {
+        if (!this.map) return;
+
+        // Marker do pokazywania klikniętego punktu
+        this.clickMarker = null;
+
+        this.map.on('click', (e) => {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            
+            console.log(`Kliknięto na mapę: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+
+            // Usuń poprzedni marker kliknięcia
+            if (this.clickMarker) {
+                this.map.removeLayer(this.clickMarker);
+            }
+
+            // Dodaj marker w miejscu kliknięcia
+            this.clickMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'click-marker',
+                    html: `<div style="
+                        background-color: #ff6b6b;
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 50%;
+                        border: 3px solid white;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                    "></div>`,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                })
+            }).addTo(this.map);
+
+            // Popup z współrzędnymi
+            const popup = L.popup()
+                .setLatLng([lat, lng])
+                .setContent(`
+                    <div style="text-align: center; padding: 5px;">
+                        <strong>Współrzędne GPS</strong><br>
+                        <div style="margin: 8px 0;">
+                            <strong>Szerokość:</strong> ${lat.toFixed(6)}°<br>
+                            <strong>Długość:</strong> ${lng.toFixed(6)}°
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.85em; color: #666;">
+                            ${lat.toFixed(6)}, ${lng.toFixed(6)}
+                        </div>
+                        <button onclick="copyCoordinates(${lat}, ${lng})" 
+                                style="margin-top: 8px; padding: 5px 10px; background: #3498db; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+                            Kopiuj współrzędne
+                        </button>
+                        <button onclick="fillCoordinates(${lat}, ${lng})" 
+                                style="margin-top: 5px; padding: 5px 10px; background: #2ecc71; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em; display: block; width: 100%;">
+                            Wypełnij formularz
+                        </button>
+                    </div>
+                `)
+                .openOn(this.map);
+
+            // Automatycznie wypełnij formularz (opcjonalnie - można wyłączyć)
+            this.fillCoordinatesForm(lat, lng);
+        });
+    }
+
+    // Wypełnij formularz współrzędnymi
+    fillCoordinatesForm(lat, lng) {
+        const latInput = document.getElementById('latitude');
+        const lngInput = document.getElementById('longitude');
+        
+        if (latInput) {
+            latInput.value = lat.toFixed(6);
+            // Dodaj efekt wizualny
+            latInput.style.background = '#d4edda';
+            setTimeout(() => {
+                latInput.style.background = '';
+            }, 1000);
+        }
+        
+        if (lngInput) {
+            lngInput.value = lng.toFixed(6);
+            // Dodaj efekt wizualny
+            lngInput.style.background = '#d4edda';
+            setTimeout(() => {
+                lngInput.style.background = '';
+            }, 1000);
         }
     }
 

@@ -187,6 +187,25 @@ body {
     min-height: 400px !important;
 }
 
+/* Marker kliknięcia na mapie */
+.click-marker {
+    cursor: pointer;
+}
+
+/* Popup z współrzędnymi */
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+}
+
+.leaflet-popup-content button {
+    transition: all 0.2s;
+}
+
+.leaflet-popup-content button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
 .map-controls {
     position: absolute;
     top: 10px;

@@ -259,6 +259,29 @@ document.getElementById('toggleMarkersBtn').addEventListener('click', () => {
     mapManager.refreshAllVehicles();
 });
 
+// Funkcje pomocnicze dla kliknięć na mapę
+window.copyCoordinates = function(lat, lng) {
+    const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    navigator.clipboard.writeText(coords).then(() => {
+        alert(`Współrzędne skopiowane do schowka:\n${coords}`);
+    }).catch(() => {
+        // Fallback dla starszych przeglądarek
+        const textArea = document.createElement('textarea');
+        textArea.value = coords;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert(`Współrzędne skopiowane:\n${coords}`);
+    });
+};
+
+window.fillCoordinates = function(lat, lng) {
+    if (mapManager) {
+        mapManager.fillCoordinatesForm(lat, lng);
+    }
+};
+
 // Funkcja inicjalizacji mapy z retry
 function initMapWithRetry(retries = 5, delay = 500) {
     // Sprawdź czy jesteśmy w trybie file://
