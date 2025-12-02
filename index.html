@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Zarządzania Flotą Pojazdów</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <h1>🚛 System Floty</h1>
+                <p class="subtitle">Monitorowanie GPS</p>
+            </header>
+
+            <!-- Panel wprowadzania danych -->
+            <section class="panel">
+                <h2>Wprowadzanie danych GPS</h2>
+                <div class="form-group">
+                    <label>Nazwa pojazdu:</label>
+                    <input type="text" id="vehicleName" placeholder="np. Pojazd 1">
+                </div>
+                <div class="form-group">
+                    <label>Szerokość geograficzna:</label>
+                    <input type="number" id="latitude" step="0.0001" placeholder="52.2297">
+                </div>
+                <div class="form-group">
+                    <label>Długość geograficzna:</label>
+                    <input type="number" id="longitude" step="0.0001" placeholder="21.0122">
+                </div>
+                <button id="addVehicleBtn" class="btn-primary">Dodaj pojazd</button>
+                <button id="addRoutePointBtn" class="btn-secondary">Dodaj punkt trasy</button>
+            </section>
+
+            <!-- Panel optymalizacji -->
+            <section class="panel">
+                <h2>Optymalizacja tras</h2>
+                <div class="form-group">
+                    <label>Wybierz pojazd:</label>
+                    <select id="vehicleSelect"></select>
+                </div>
+                <button id="optimizeRouteBtn" class="btn-primary">Optymalizuj trasę</button>
+                <button id="clearRouteBtn" class="btn-secondary">Wyczyść trasę</button>
+            </section>
+
+            <!-- Panel symulacji -->
+            <section class="panel">
+                <h2>Symulacja</h2>
+                <button id="startSimulationBtn" class="btn-primary">Start symulacji</button>
+                <button id="stopSimulationBtn" class="btn-secondary">Stop symulacji</button>
+                <div class="form-group">
+                    <label>Liczba pojazdów:</label>
+                    <input type="number" id="simVehicleCount" value="5" min="1" max="20">
+                </div>
+            </section>
+
+            <!-- Lista pojazdów -->
+            <section class="panel">
+                <h2>Flota pojazdów</h2>
+                <div id="vehiclesList" class="vehicles-list"></div>
+            </section>
+        </aside>
+
+        <!-- Główna zawartość -->
+        <main class="main-content">
+            <!-- Mapa -->
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="map-controls">
+                    <button id="centerMapBtn" class="map-btn">📍 Centruj mapę</button>
+                    <button id="toggleMarkersBtn" class="map-btn">👁️ Pokaż/Ukryj markery</button>
+                </div>
+            </div>
+
+            <!-- Panel statystyk i wykresów -->
+            <div class="stats-panel">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Liczba pojazdów</h3>
+                        <p class="stat-value" id="totalVehicles">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Całkowita odległość</h3>
+                        <p class="stat-value" id="totalDistance">0 km</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Zużycie paliwa</h3>
+                        <p class="stat-value" id="totalFuel">0 L</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Czas pracy</h3>
+                        <p class="stat-value" id="totalWorkTime">0 h</p>
+                    </div>
+                </div>
+
+                <!-- Wykresy -->
+                <div class="charts-container">
+                    <div class="chart-wrapper">
+                        <h3>Zużycie paliwa pojazdów</h3>
+                        <canvas id="fuelChart"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3>Czas pracy kierowców</h3>
+                        <canvas id="workTimeChart"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3>Przebyta odległość</h3>
+                        <canvas id="distanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Skrypty -->
+    <script>
+        // Sprawdź czy Leaflet się załadował
+        window.leafletLoaded = false;
+        
+        function checkLeaflet() {
+            if (typeof L !== 'undefined') {
+                window.leafletLoaded = true;
+                console.log('Leaflet załadowany pomyślnie');
+            } else {
+                console.warn('Leaflet jeszcze nie załadowany...');
+            }
+        }
+        
+        // Sprawdź co 100ms przez 5 sekund
+        let checkCount = 0;
+        const checkInterval = setInterval(() => {
+            checkLeaflet();
+            checkCount++;
+            if (window.leafletLoaded || checkCount > 50) {
+                clearInterval(checkInterval);
+            }
+        }, 100);
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            onerror="console.error('Błąd ładowania Leaflet!'); document.getElementById('map').innerHTML='<div style=\'padding:20px;text-align:center;color:#666;\'>Błąd: Nie można załadować biblioteki mapy. Sprawdź połączenie internetowe.</div>';">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="fleetManager.js"></script>
+    <script src="mapManager.js"></script>
+    <script src="routeOptimizer.js"></script>
+    <script src="simulation.js"></script>
+    <script src="charts.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
